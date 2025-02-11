@@ -19,7 +19,10 @@ const courseRoutes = require('./routes/courseRoutes');
 // const { verifyToken } = require('./middleware/auth');  // Import token verification middleware
 
 const app = express();
-
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://fabulous-dango-df3dfb.netlify.app'
+];
 // ======= Environment Validation =======
 if (!process.env.DATABASE_URI || !process.env.JWT_SECRET) {
     console.error('Missing required environment variables. Check .env file.');
@@ -57,10 +60,18 @@ app.use(limiter);
 
 app.use(express.json());
 app.use(cors({
-    origin: 'http://localhost:3000', // Allow requests from your frontend
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,  // Allow cookies and other credentials to be sent
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // Allow cookies and other credentials to be sent
 }));
 app.use(morgan('dev'));
 app.options('*', cors());
