@@ -21,7 +21,8 @@ const courseRoutes = require('./routes/courseRoutes');
 const app = express();
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://fabulous-dango-df3dfb.netlify.app'
+  'https://fabulous-dango-df3dfb.netlify.app',
+  'https://masai-connect-frontend.vercel.app'
 ];
 // ======= Environment Validation =======
 if (!process.env.DATABASE_URI || !process.env.JWT_SECRET) {
