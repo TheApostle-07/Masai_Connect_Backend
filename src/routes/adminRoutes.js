@@ -16,7 +16,7 @@ router.get('/users', async (req, res) => {
       const idArray = ids.split(',').map(id => id.trim());
       query._id = { $in: idArray };
     }
-    const users = await User.find(query).select('name email role'); // Adjust selected fields as needed
+     const users = await User.find(query); // Adjust selected fields as needed
     return res.status(200).json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
