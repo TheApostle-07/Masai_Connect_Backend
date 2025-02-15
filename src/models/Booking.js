@@ -1,5 +1,3 @@
-// models/Booking.js
-
 const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema(
@@ -17,7 +15,7 @@ const bookingSchema = new mongoose.Schema(
     sessionType: {
       type: String,
       required: true,
-      // For example: "Mentor Connect", "IA Connect", "EC Connect", etc.
+      // e.g., "Mentor Connect", "IA Connect", etc.
     },
     mode: {
       type: String,
@@ -55,7 +53,15 @@ const bookingSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Booked', 'In Progress', 'Completed'],
+      enum: [
+        'Booked',
+        'In Progress',
+        'Completed',
+        'Cancellation Requested',
+        'Reschedule Requested',
+        'Cancelled',
+        'Rescheduled',
+      ],
       default: 'Booked',
     },
   },
