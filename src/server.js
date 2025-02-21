@@ -14,7 +14,7 @@ const meetingsRoute = require('./routes/meetings');
 const slotRoutes = require('./routes/slotRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const courseRoutes = require('./routes/courseRoutes');
-const zoomWebhookRoutes = require('./zoomWebhookRoutes');
+const zoomWebhookRoutes = require('./routes/zoomWebhookRoutes');
 
 
 // const { verifyToken } = require('./middleware/auth');  // Import token verification middleware
