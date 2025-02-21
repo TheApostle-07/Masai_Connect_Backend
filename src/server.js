@@ -30,7 +30,6 @@ if (!process.env.DATABASE_URI || !process.env.JWT_SECRET) {
     console.error('Missing required environment variables. Check .env file.');
     process.exit(1); // Exit if required variables are missing
 }
-app.use('/api/zoom', zoomWebhookRoutes);
 
 
 
@@ -60,9 +59,13 @@ const limiter = rateLimit({
     max: 100,
     message: 'Too many requests, please try again later.',
 });
+app.use(express.json());
+
+app.use('/api/zoom', zoomWebhookRoutes);
+
+
 app.use(limiter);
 
-app.use(express.json());
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
