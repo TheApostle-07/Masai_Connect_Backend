@@ -51,6 +51,7 @@ mongoose
 
 // Basic security headers
 app.use(helmet());
+app.set('trust proxy', 1); 
 
 // Limit repeated requests to public APIs
 const limiter = rateLimit({
