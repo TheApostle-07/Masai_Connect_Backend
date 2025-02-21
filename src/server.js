@@ -30,6 +30,7 @@ if (!process.env.DATABASE_URI || !process.env.JWT_SECRET) {
     console.error('Missing required environment variables. Check .env file.');
     process.exit(1); // Exit if required variables are missing
 }
+app.use('/api/zoom', zoomWebhookRoutes);
 
 
 
@@ -105,7 +106,6 @@ app.use('/api', adminRoutes);
 app.use('/api', slotRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api/courses', courseRoutes);
-app.use('/api/zoom', zoomWebhookRoutes);
 
 
 
