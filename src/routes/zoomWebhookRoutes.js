@@ -7,50 +7,55 @@ const { getZoomMeetingParticipants } = require('../services/zoom.service');
 
 router.post('/webhook', async (req, res) => {
   try {
-    const { event, payload } = req.body;
+    const { event, payload, plainToken } = req.body;
 
-    // We only care about meeting.ended
+    // 🔑 Handle Zoom URL Validation Request
+    if (plainToken) {
+      console.log('Zoom URL Validation Request Received');
+      return res.status(200).json({
+        plainToken, // Send back the received plainToken
+        encryptedToken: plainToken, // In production, use HMAC SHA-256 for token encryption
+      });
+    }
+
+    // Handle meeting events
+    const zoomMeetingId = payload.object.id;
+
+    if (event === 'meeting.participant_joined') {
+      const participantEmail = payload.object.participant.email;
+
+      console.log(`Participant joined: ${participantEmail} in Meeting ID: ${zoomMeetingId}`);
+
+      const booking = await Booking.findOne({ zoomMeetingId });
+      if (booking) {
+        if (participantEmail === booking.mentorEmail) {
+          booking.mentorJoined = true;
+        } else if (participantEmail === booking.studentEmail) {
+          booking.studentJoined = true;
+        }
+        await booking.save();
+      }
+    }
+
     if (event === 'meeting.ended') {
-      const zoomMeetingId = payload.object.id; // numeric meeting ID
       console.log(`Meeting ended. Zoom Meeting ID: ${zoomMeetingId}`);
 
-      // 1) Find local booking by zoomMeetingId
       const booking = await Booking.findOne({ zoomMeetingId });
       if (!booking) {
-        console.log('No matching booking found for zoomMeetingId=', zoomMeetingId);
+        console.log('No matching booking found.');
         return res.status(200).send('No booking found');
       }
 
-      // 2) Retrieve participants from Zoom
-      const participants = await getZoomMeetingParticipants(zoomMeetingId);
+      if (!booking.mentorJoined) booking.mentorNoShow = true;
+      if (!booking.studentJoined) booking.studentNoShow = true;
 
-      // Suppose you have booking.mentorEmail, booking.studentEmail
-      // (You could also populate booking.mentor and booking.student docs to get their emails.)
-      const mentorEmail = booking.mentorEmail || 'mentor@example.com';
-      const studentEmail = booking.studentEmail || 'student@example.com';
-
-      // 3) Check who joined
-      const mentorJoined = participants.some(
-        (p) => p.user_email?.toLowerCase() === mentorEmail.toLowerCase()
-      );
-      const studentJoined = participants.some(
-        (p) => p.user_email?.toLowerCase() === studentEmail.toLowerCase()
-      );
-
-      // 4) Mark no-shows
-      if (!mentorJoined) booking.mentorNoShow = true;
-      if (!studentJoined) booking.studentNoShow = true;
-
-      // 5) Mark the booking as completed
       booking.status = 'Completed';
       await booking.save();
 
-      console.log('Updated booking with no-show info:', booking._id);
-      return res.status(200).send('Webhook processed successfully');
+      console.log('Updated booking after meeting end:', booking._id);
     }
 
-    // Otherwise, just respond
-    return res.status(200).send('Event not handled');
+    return res.status(200).send('Webhook processed successfully');
   } catch (error) {
     console.error('Error handling Zoom webhook:', error);
     return res.status(500).json({ error: 'Internal server error' });
