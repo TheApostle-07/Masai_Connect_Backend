@@ -14,6 +14,7 @@ const meetingsRoute = require('./routes/meetings');
 const slotRoutes = require('./routes/slotRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const courseRoutes = require('./routes/courseRoutes');
+const zoomWebhookRoutes = require('./zoomWebhookRoutes');
 
 
 // const { verifyToken } = require('./middleware/auth');  // Import token verification middleware
@@ -103,6 +104,7 @@ app.use('/api', adminRoutes);
 app.use('/api', slotRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/zoom', zoomWebhookRoutes);
 
 
 
