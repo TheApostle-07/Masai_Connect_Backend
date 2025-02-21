@@ -1,4 +1,3 @@
-// zoomWebhookRoutes.js
 const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
@@ -9,55 +8,62 @@ const ZOOM_WEBHOOK_SECRET_TOKEN = process.env.ZOOM_WEBHOOK_SECRET_TOKEN || '';
 
 router.post('/webhook', async (req, res) => {
   try {
-    const { event, payload, plainToken } = req.body;
+    const { event, payload } = req.body;
+    // For endpoint.url_validation, the token is at payload.plainToken
+    if (event === 'endpoint.url_validation') {
+      const plainToken = payload && payload.plainToken;
+      console.log('Zoom URL Validation Request Received, plainToken=', plainToken);
 
-    // 1) Zoom URL Validation
-    if (event === 'endpoint.url_validation' && plainToken) {
-      console.log('Zoom URL Validation Request Received');
+      if (!plainToken) {
+        // If for some reason no plainToken is provided, respond 400
+        return res.status(400).json({ error: 'No plainToken in validation request.' });
+      }
 
-      // Create HMAC for the plainToken
+      // Create HMAC SHA-256 using your Zoom Webhook Secret
       const hashForValidate = crypto
         .createHmac('sha256', ZOOM_WEBHOOK_SECRET_TOKEN)
         .update(plainToken)
         .digest('hex');
 
-      // Return the required response
+      // Return the challenge response
       return res.status(200).json({
         plainToken,
         encryptedToken: hashForValidate,
       });
     }
 
-    // 2) Now handle normal Zoom events that have payload.object
-    // If it's not endpoint.url_validation, we expect a real event like meeting.ended, etc.
+    // If not endpoint.url_validation, handle normal events (meeting.ended, etc.)
 
     if (!payload) {
       console.log('No payload for Zoom event:', req.body);
       return res.status(400).json({ error: 'No payload found in Zoom event.' });
     }
 
-    // Some events like `meeting.ended` or `meeting.participant_joined` require `payload.object`.
     if (!payload.object) {
       console.log('Missing payload.object for Zoom event:', req.body);
-      return res.status(400).json({ error: 'Missing payload.object in Zoom event.' });
+      // Possibly it's an event you don't handle. Return 200 so Zoom doesn't keep retrying.
+      return res.status(200).send('No payload.object for this event');
     }
 
     const zoomMeetingId = payload.object.id;
 
+    // Example: participant joined
     if (event === 'meeting.participant_joined') {
-      const participantEmail = payload.object.participant.email;
+      const participantEmail = payload.object.participant?.email;
       console.log(`Participant joined: ${participantEmail} in Meeting ID: ${zoomMeetingId}`);
+
       // ... update booking ...
       return res.status(200).send('Participant joined processed');
     }
 
+    // meeting.ended
     if (event === 'meeting.ended') {
       console.log(`Meeting ended. Zoom Meeting ID: ${zoomMeetingId}`);
       // ... update booking ...
       return res.status(200).send('Meeting ended processed');
     }
 
-    // If we get here, event not handled
+    // If event not recognized
     return res.status(200).send('Event not handled');
   } catch (error) {
     console.error('Error handling Zoom webhook:', error);
